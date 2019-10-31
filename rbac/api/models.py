@@ -32,6 +32,7 @@ class Tenant(TenantMixin):
     # Delete all schemas when a tenant is removed
     auto_drop_schema = True
 
+    enforcement_enabled = models.BooleanField(default=False)
 
 class User(models.Model):
     """A request User."""
