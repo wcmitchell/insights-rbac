@@ -16,6 +16,8 @@
 #
 
 """View for role management."""
+import os
+
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.shortcuts import get_object_or_404
@@ -28,6 +30,9 @@ from rest_framework.filters import OrderingFilter
 
 from .model import Role
 from .serializer import RoleSerializer
+
+TESTING_APP = os.getenv('TESTING_APPLICATION')
+APP_WHITELIST = [TESTING_APP, 'cost-management']
 
 
 class RoleFilter(filters.FilterSet):
@@ -121,6 +126,15 @@ class RoleViewSet(mixins.CreateModelMixin,
                 ]
             }
         """
+        for perm in request.data.get('access', []):
+            app = perm.get('permission').split(':')[0]
+            if app not in APP_WHITELIST:
+                key = 'role'
+                message = 'Custom roles cannot be created for {}'.format(app)
+                error = {
+                    key: [_(message)]
+                }
+                raise serializers.ValidationError(error)
         return super().create(request=request, args=args, kwargs=kwargs)
 
     def list(self, request, *args, **kwargs):
@@ -224,7 +238,7 @@ class RoleViewSet(mixins.CreateModelMixin,
             HTTP/1.1 204 NO CONTENT
         """
         role = get_object_or_404(Role, uuid=kwargs.get('uuid'))
-        if role.system:
+        if role.system or role.platform_default:
             key = 'role'
             message = 'System roles cannot be deleted.'
             error = {

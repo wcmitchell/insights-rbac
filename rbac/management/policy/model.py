@@ -21,8 +21,8 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from management.group.model import Group
+from management.rbac_fields import AutoDateTimeField
 from management.role.model import Role
-from management.utils import AutoDateTimeField
 
 
 class Policy(models.Model):
@@ -35,6 +35,7 @@ class Policy(models.Model):
     group = models.ForeignKey(Group, null=True, on_delete=models.CASCADE,
                               related_name='policies')
     roles = models.ManyToManyField(Role, related_name='policies')
+    system = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
     modified = AutoDateTimeField(default=timezone.now)
 
